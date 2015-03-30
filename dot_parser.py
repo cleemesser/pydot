@@ -25,7 +25,12 @@ from pyparsing import __version__ as pyparsing_version
 from pyparsing import ( nestedExpr, Literal, CaselessLiteral, Word, Upcase, OneOrMore, ZeroOrMore,
     Forward, NotAny, delimitedList, oneOf, Group, Optional, Combine, alphas, nums,
     restOfLine, cStyleComment, nums, alphanums, printables, empty, quotedString,
-    ParseException, ParseResults, CharsNotIn, _noncomma, dblQuotedString, QuotedString, ParserElement )
+    ParseException, ParseResults, CharsNotIn, dblQuotedString, QuotedString, ParserElement )
+try:
+    from pyparsing import _noncomma
+except ImportError: # we must be dealing with pyparsing version >= 2.0
+    _noncomma = "".join( [ c for c in printables if c != "," ] )
+
 
 
 class P_AttrList:
