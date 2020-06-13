@@ -186,24 +186,24 @@ class TestGraphAPI(unittest.TestCase):
             cwd = os.path.dirname(filename),
             stdin=file(filename, 'rt'),
             stderr=subprocess.PIPE, stdout=subprocess.PIPE)
-            
+
         stdout = p.stdout
-        
-        stdout_output = list()
+
+        stdout_output = []
         while True:
             data = stdout.read()
             if not data:
                 break
             stdout_output.append(data)
         stdout.close()
-            
+
         if stdout_output:
             stdout_output = ''.join(stdout_output)
-            
+
         #pid, status = os.waitpid(p.pid, 0)
         status = p.wait()
-        
-        
+
+
         return sha256(stdout_output).hexdigest()
         
     
@@ -321,14 +321,14 @@ class TestGraphAPI(unittest.TestCase):
     def test_names_of_a_thousand_nodes(self):
         
         self._reset_graphs()
-        
-        names = set([ 'node_%05d' % i for i in xrange(10**4) ])
-        
+
+        names = {'node_%05d' % i for i in xrange(10**4)}
+
         for name in names:
-        
+
             self.graph_directed.add_node( pydot.Node(name, label=name) )
-            
-        self.assertEqual( set([ n.get_name() for n in self.graph_directed.get_nodes() ]), names )
+
+        self.assertEqual({n.get_name() for n in self.graph_directed.get_nodes()}, names)
         
     
     def test_executable_not_found_exception(self):

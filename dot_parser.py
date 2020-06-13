@@ -71,7 +71,7 @@ class DefaultStatement(P_AttrList):
             self.default_type, self.attrs)
 
 
-top_graphs = list()
+top_graphs = []
 
 def push_top_graph_stmt(str, loc, toks):
 
@@ -133,34 +133,31 @@ def update_parent_graph_hierarchy(g, parent_graph=None, level=0):
 
     if parent_graph is None:
         parent_graph = g
-        
+
     for key_name in ('edges',):
 
-        if isinstance(g, pydot.frozendict):
-            item_dict = g
-        else:
-            item_dict = g.obj_dict
-            
+        item_dict = g if isinstance(g, pydot.frozendict) else g.obj_dict
         if not item_dict.has_key( key_name ):
             continue
 
         for key, objs in item_dict[key_name].items():
             for obj in objs:
-                if 'parent_graph' in obj and obj['parent_graph'].get_parent_graph()==g:
-                    if obj['parent_graph'] is g:
-                        pass
-                    else:
-                        obj['parent_graph'].set_parent_graph(parent_graph)
+                if (
+                    'parent_graph' in obj
+                    and obj['parent_graph'].get_parent_graph() == g
+                    and obj['parent_graph'] is not g
+                ):
+                    obj['parent_graph'].set_parent_graph(parent_graph)
 
                 if key_name == 'edges' and len(key) == 2:
                     for idx, vertex in enumerate( obj['points'] ):
                         if isinstance( vertex, (pydot.Graph, pydot.Subgraph, pydot.Cluster)):
                             vertex.set_parent_graph(parent_graph)
-                        if isinstance( vertex, pydot.frozendict):
-                            if vertex['parent_graph'] is g:
-                                pass
-                            else:
-                                vertex['parent_graph'].set_parent_graph(parent_graph)
+                        if (
+                            isinstance(vertex, pydot.frozendict)
+                            and vertex['parent_graph'] is not g
+                        ):
+                            vertex['parent_graph'].set_parent_graph(parent_graph)
 
 
 
@@ -277,18 +274,19 @@ def push_default_stmt(str, loc, toks):
 
 def push_attr_list(str, loc, toks):
 
-    p = P_AttrList(toks)
-    return p
+    return P_AttrList(toks)
 
 
 def get_port(node):
 
-    if len(node)>1:
-        if isinstance(node[1], ParseResults):
-            if len(node[1][0])==2:
-                if node[1][0][0]==':':
-                    return node[1][0][1]
-                    
+    if (
+        len(node) > 1
+        and isinstance(node[1], ParseResults)
+        and len(node[1][0]) == 2
+        and node[1][0][0] == ':'
+    ):
+        return node[1][0][1]
+
     return None
 
     
@@ -360,18 +358,14 @@ def push_edge_stmt(str, loc, toks):
 
 def push_node_stmt(s, loc, toks):
 
-    if len(toks) == 2:
-        attrs = toks[1].attrs
-    else:
-        attrs = {}
-        
+    attrs = toks[1].attrs if len(toks) == 2 else {}
     node_name = toks[0]
-    if isinstance(node_name, list) or isinstance(node_name, tuple):
-        if len(node_name)>0:
-            node_name = node_name[0]
-    
-    n = pydot.Node(str(node_name), **attrs)
-    return n
+    if (isinstance(node_name, list) or isinstance(node_name, tuple)) and len(
+        node_name
+    ) > 0:
+        node_name = node_name[0]
+
+    return pydot.Node(str(node_name), **attrs)
 
 
 

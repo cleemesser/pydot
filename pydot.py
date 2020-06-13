@@ -111,17 +111,14 @@ class frozendict(dict):
                     elif isinstance(v, dict):
                         arg[k] = frozendict(v)
                     elif isinstance(v, list):
-                        v_ = list()
+                        v_ = []
                         for elm in v:
                             if isinstance(elm, dict):
                                 v_.append( frozendict(elm) )
                             else:
                                 v_.append( elm )
                         arg[k] = tuple(v_)
-                args_.append( arg )
-            else:
-                args_.append( arg )
-
+            args_.append( arg )
         dict.__init__(new, *args_, **kw)
         return new
 
@@ -247,19 +244,14 @@ def graph_from_edges(edge_list, node_prefix='', directed=False):
     calculated from one of the symmetric halves of the matrix.
     """
     
-    if directed:
-        graph = Dot(graph_type='digraph')
-        
-    else:
-        graph = Dot(graph_type='graph')
-        
+    graph = Dot(graph_type='digraph') if directed else Dot(graph_type='graph')
     for edge in edge_list:
-        
+
         if isinstance(edge[0], str):
             src = node_prefix + edge[0]
         else:
             src = node_prefix + str(edge[0])
-            
+
         if isinstance(edge[1], str):
             dst = node_prefix + edge[1]
         else:
@@ -267,7 +259,7 @@ def graph_from_edges(edge_list, node_prefix='', directed=False):
 
         e = Edge( src, dst )
         graph.add_edge(e)
-        
+
     return graph
 
 
@@ -281,12 +273,8 @@ def graph_from_adjacency_matrix(matrix, node_prefix= u'', directed=False):
     """
     
     node_orig = 1
-    
-    if directed:
-        graph = Dot(graph_type='digraph')
-    else:
-        graph = Dot(graph_type='graph')
-        
+
+    graph = Dot(graph_type='digraph') if directed else Dot(graph_type='graph')
     for row in matrix:
         if not directed:
             skip = matrix.index(row)
@@ -295,7 +283,7 @@ def graph_from_adjacency_matrix(matrix, node_prefix= u'', directed=False):
             skip = 0
             r = row
         node_dest = skip+1
-        
+
         for e in r:
             if e:
                 graph.add_edge(
@@ -303,7 +291,7 @@ def graph_from_adjacency_matrix(matrix, node_prefix= u'', directed=False):
                         node_prefix + node_dest) )
             node_dest += 1
         node_orig += 1
-        
+
     return graph
 
 
@@ -318,22 +306,18 @@ def graph_from_incidence_matrix(matrix, node_prefix='', directed=False):
     """
     
     node_orig = 1
-    
-    if directed:
-        graph = Dot(graph_type='digraph')
-    else:
-        graph = Dot(graph_type='graph')
-        
+
+    graph = Dot(graph_type='digraph') if directed else Dot(graph_type='graph')
     for row in matrix:
         nodes = []
         c = 1
-        
+
         for node in row:
             if node:
                 nodes.append(c*node)
             c += 1
             nodes.sort()
-            
+
         if len(nodes) == 2:
             graph.add_edge(	
                 Edge( node_prefix + abs(nodes[0]),	
@@ -578,9 +562,7 @@ class Common:
 
     def __getstate__(self):
 
-        dict = copy.copy(self.obj_dict)
-   
-        return dict
+        return copy.copy(self.obj_dict)
 
     
     def __setstate__(self, state):
@@ -810,21 +792,21 @@ class Node(object, Common):
         #
         node = quote_if_necessary(self.obj_dict['name'])
 
-        node_attr = list()
+        node_attr = []
 
         for attr, value in self.obj_dict['attributes'].iteritems():
             if value is not None:
                 node_attr.append( '%s=%s' % (attr, quote_if_necessary(value) ) )
             else:
                 node_attr.append( attr )
-                
-                
+
+
         # No point in having nodes setting any defaults if the don't set
         # any attributes...
         #
-        if node in ('graph', 'node', 'edge') and len(node_attr) == 0:
+        if node in ('graph', 'node', 'edge') and not node_attr:
             return ''
-            
+
         node_attr = ', '.join(node_attr)
 
         if node_attr:
@@ -980,23 +962,23 @@ class Edge(object,  Common ):
 
         src = self.parse_node_ref( self.get_source() )
         dst = self.parse_node_ref( self.get_destination() )
-        
+
         if isinstance(src, frozendict):
             edge = [ Subgraph(obj_dict=src).to_string() ]
         elif isinstance(src, (int, long)):
             edge = [ str(src) ]
         else:
             edge = [ src ]
-        
+
         if	(self.get_parent_graph() and
             self.get_parent_graph().get_top_graph_type() and
             self.get_parent_graph().get_top_graph_type() == 'digraph' ):
 
             edge.append( '->' )
-            
+
         else:
             edge.append( '--' )
-            
+
         if isinstance(dst, frozendict):
             edge.append( Subgraph(obj_dict=dst).to_string() )
         elif isinstance(dst, (int, long)):
@@ -1005,17 +987,17 @@ class Edge(object,  Common ):
             edge.append( dst )
 
 
-        edge_attr = list()
-        
+        edge_attr = []
+
         for attr, value in self.obj_dict['attributes'].iteritems():
-        
+
             if value is not None:
                 edge_attr.append( '%s=%s' % (attr, quote_if_necessary(value) ) )
             else:
                 edge_attr.append( attr )
 
         edge_attr = ', '.join(edge_attr)
-        
+
         if edge_attr:
             edge.append( ' [' + edge_attr + ']' )
 
@@ -1307,19 +1289,17 @@ class Graph(object, Common):
         If nodes are deleted it returns True. If no action
         is taken it returns False.
         """
-    
+
         if isinstance(name, Node):
             name = name.get_name()
-        
+
         if self.obj_dict['nodes'].has_key(name):
-        
+
             if index is not None and index < len(self.obj_dict['nodes'][name]):
                 del self.obj_dict['nodes'][name][index]
-                return True
             else:
                 del self.obj_dict['nodes'][name]
-                return True
-        
+            return True
         return False
                         
 
@@ -1334,12 +1314,12 @@ class Graph(object, Common):
         An empty list is returned otherwise.
         """
         
-        match = list()
-        
+        match = []
+
         if self.obj_dict['nodes'].has_key(name):
-        
+
             match.extend( [ Node( obj_dict = obj_dict ) for obj_dict in self.obj_dict['nodes'][name] ])
-        
+
         return match
 
 
@@ -1356,11 +1336,11 @@ class Graph(object, Common):
         composing the graph.
         """
         
-        node_objs = list()
-        
+        node_objs = []
+
         for node, obj_dict_list in self.obj_dict['nodes'].iteritems():
                 node_objs.extend( [ Node( obj_dict = obj_d ) for obj_d in obj_dict_list ] )
-        
+
         return node_objs
 
 
@@ -1416,22 +1396,20 @@ class Graph(object, Common):
             src, dst = src_or_list
         else:
             src, dst = src_or_list, dst
-    
+
         if isinstance(src, Node):
             src = src.get_name()
 
         if isinstance(dst, Node):
             dst = dst.get_name()
-        
+
         if self.obj_dict['edges'].has_key( (src, dst) ):
-        
+
             if index is not None and index < len(self.obj_dict['edges'][(src, dst)]):
                 del self.obj_dict['edges'][(src, dst)][index]
-                return True
             else:
                 del self.obj_dict['edges'][(src, dst)]
-                return True
-        
+            return True
         return False
         
 
@@ -1453,15 +1431,15 @@ class Graph(object, Common):
             edge_points = (src_or_list, dst)
             edge_points_reverse = (dst, src_or_list)
 
-        match = list()
-        
+        match = []
+
         if self.obj_dict['edges'].has_key( edge_points ) or (
             self.get_top_graph_type() == 'graph' and self.obj_dict['edges'].has_key( edge_points_reverse )):
-        
+
             edges_obj_dict = self.obj_dict['edges'].get(
                 edge_points,
                 self.obj_dict['edges'].get( edge_points_reverse, None ))
-        
+
             for edge_obj_dict in edges_obj_dict:
                 match.append( Edge( edge_points[0], edge_points[1], obj_dict = edge_obj_dict ) )
 
@@ -1479,11 +1457,11 @@ class Graph(object, Common):
         composing the graph.
         """
         
-        edge_objs = list()
-        
+        edge_objs = []
+
         for edge, obj_dict_list in self.obj_dict['edges'].iteritems():
                 edge_objs.extend( [ Edge( obj_dict = obj_d ) for obj_d in obj_dict_list ] )
-        
+
         return edge_objs
 
 
@@ -1495,19 +1473,19 @@ class Graph(object, Common):
         None.
         """
 
-        if not isinstance(sgraph, Subgraph) and not isinstance(sgraph, Cluster):
+        if not (isinstance(sgraph, Subgraph) or isinstance(sgraph, Cluster)):
             raise TypeError('add_subgraph() received a non subgraph class object:' + str(sgraph))
-            
+
         if self.obj_dict['subgraphs'].has_key(sgraph.get_name()):
-        
+
             sgraph_list = self.obj_dict['subgraphs'][ sgraph.get_name() ]
             sgraph_list.append( sgraph.obj_dict )
-                
+
         else:
             self.obj_dict['subgraphs'][ sgraph.get_name() ] = [ sgraph.obj_dict ]
-         
+
         sgraph.set_sequence( self.get_next_sequence_number() )
-        
+
         sgraph.set_parent_graph( self.get_parent_graph() )
 
 
@@ -1524,16 +1502,16 @@ class Graph(object, Common):
         An empty list is returned otherwise.
         """
         
-        match = list()
-        
+        match = []
+
         if self.obj_dict['subgraphs'].has_key( name ):
-        
+
             sgraphs_obj_dict = self.obj_dict['subgraphs'].get( name )
-        
+
             for obj_dict_list in sgraphs_obj_dict:
                 #match.extend( Subgraph( obj_dict = obj_d ) for obj_d in obj_dict_list )
                 match.append( Subgraph( obj_dict = obj_dict_list ) )
-        
+
         return match
 
 
@@ -1549,11 +1527,11 @@ class Graph(object, Common):
         in the graph.
         """
         
-        sgraph_objs = list()
-        
+        sgraph_objs = []
+
         for sgraph, obj_dict_list in self.obj_dict['subgraphs'].iteritems():
                 sgraph_objs.extend( [ Subgraph( obj_dict = obj_d ) for obj_d in obj_dict_list ] )
-        
+
         return sgraph_objs
             
 
@@ -1583,13 +1561,15 @@ class Graph(object, Common):
         """
         
         
-        graph = list()
-        
-        if self.obj_dict.get('strict', None) is not None:
-        
-            if self==self.get_parent_graph() and self.obj_dict['strict']:
-            
-                graph.append('strict ')
+        graph = []
+
+        if (
+            self.obj_dict.get('strict', None) is not None
+            and self == self.get_parent_graph()
+            and self.obj_dict['strict']
+        ):
+
+            graph.append('strict ')
 
         if self.obj_dict['name'] == '':
             if 'show_keyword' in self.obj_dict and self.obj_dict['show_keyword']:
@@ -1601,75 +1581,75 @@ class Graph(object, Common):
 
 
         for attr in self.obj_dict['attributes'].iterkeys():
-        
+
             if self.obj_dict['attributes'].get(attr, None) is not None:
-       
+
                 val = self.obj_dict['attributes'].get(attr)
                 if val is not None:
                     graph.append( '%s=%s' % (attr, quote_if_necessary(val)) )
                 else:
                     graph.append( attr )
-                    
+
                 graph.append( ';\n' )
 
 
         edges_done = set()
-        
-        edge_obj_dicts = list()
+
+        edge_obj_dicts = []
         for e in self.obj_dict['edges'].itervalues():
             edge_obj_dicts.extend(e)
-            
+
         if edge_obj_dicts:
             edge_src_set, edge_dst_set = zip( *[obj['points'] for obj in edge_obj_dicts] )
             edge_src_set, edge_dst_set = set(edge_src_set), set(edge_dst_set)
         else:
             edge_src_set, edge_dst_set = set(), set()
-            
-        node_obj_dicts = list()
+
+        node_obj_dicts = []
         for e in self.obj_dict['nodes'].itervalues():
             node_obj_dicts.extend(e)
 
-        sgraph_obj_dicts = list()
+        sgraph_obj_dicts = []
         for sg in self.obj_dict['subgraphs'].itervalues():
             sgraph_obj_dicts.extend(sg)
 
-        
+
         obj_list = [ (obj['sequence'], obj) for obj in (edge_obj_dicts + node_obj_dicts + sgraph_obj_dicts) ]
         obj_list.sort()
-        
+
         for idx, obj in obj_list:
-        
+
             if obj['type'] == 'node':
 
                 node = Node(obj_dict=obj)
-            
-                if self.obj_dict.get('suppress_disconnected', False):
-                
-                    if (node.get_name() not in edge_src_set and
-                        node.get_name() not in edge_dst_set):
-                        
-                        continue
-                        
+
+                if self.obj_dict.get('suppress_disconnected', False) and (
+                    node.get_name() not in edge_src_set
+                    and node.get_name() not in edge_dst_set
+                ):
+
+                    continue
+
                 graph.append( node.to_string()+'\n' )
 
             elif obj['type'] == 'edge':
 
                 edge = Edge(obj_dict=obj)
-                
+
                 if self.obj_dict.get('simplify', False) and edge in edges_done:
                     continue
-                
+
                 graph.append( edge.to_string() + '\n' )
                 edges_done.add(edge)
-                
+
             else:
-            
+
                 sgraph = Subgraph(obj_dict=obj)
-                
+
                 graph.append( sgraph.to_string()+'\n' )
 
         graph.append( '}\n' )
-        
+
         return ''.join(graph)
 
 
@@ -1782,10 +1762,10 @@ class Dot(Graph):
     def __init__(self, *argsl, **argsd):
         Graph.__init__(self, *argsl, **argsd)
 
-        self.shape_files = list()
+        self.shape_files = []
 
         self.progs = None
-        
+
         self.formats = ['canon', 'cmap', 'cmapx', 'cmapx_np', 'dia', 'dot',
             'fig', 'gd', 'gd2', 'gif', 'hpgl', 'imap', 'imap_np', 'ismap',
             'jpe', 'jpeg', 'jpg', 'mif', 'mp', 'pcl', 'pdf', 'pic', 'plain',
@@ -1793,7 +1773,7 @@ class Dot(Graph):
             'vrml', 'vtx', 'wbmp', 'xdot', 'xlib' ]
 
         self.prog = 'dot'
-        
+
         # Automatically creates all the methods enabling the creation
         # of output in any of the supported formats.
         for frmt in self.formats:
@@ -1802,12 +1782,12 @@ class Dot(Graph):
                 lambda f=frmt, prog=self.prog : self.create(format=f, prog=prog))
             f = self.__dict__['create_'+frmt]
             f.__doc__ = '''Refer to the docstring accompanying the 'create' method for more information.'''
-            
+
         for frmt in self.formats+['raw']:
             self.__setattr__(
                 'write_'+frmt,
                 lambda path, f=frmt, prog=self.prog : self.write(path, format=f, prog=prog))
-                
+
             f = self.__dict__['write_'+frmt]
             f.__doc__ = '''Refer to the docstring accompanying the 'write' method for more information.'''
         
@@ -1815,9 +1795,7 @@ class Dot(Graph):
     
     def __getstate__(self):
         
-        dict = copy.copy(self.obj_dict)
-        
-        return dict
+        return copy.copy(self.obj_dict)
     
     def __setstate__(self, state):
         
@@ -1891,17 +1869,16 @@ class Dot(Graph):
 
         if prog is None:
             prog = self.prog
-        
+
         dot_fd = file(path, "w+b")
         if format == 'raw':
             data = self.to_string()
-            if isinstance(data, basestring):
-                if not isinstance(data, unicode):
-                    try:
-                        data = unicode(data, 'utf-8')
-                    except:
-                        pass
-                        
+            if isinstance(data, basestring) and not isinstance(data, unicode):
+                try:
+                    data = unicode(data, 'utf-8')
+                except:
+                    pass
+
             try:
                 data = data.encode('utf-8')
             except:
